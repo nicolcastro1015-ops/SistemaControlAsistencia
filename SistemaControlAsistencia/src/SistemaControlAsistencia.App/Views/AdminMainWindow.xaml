@@ -1,0 +1,41 @@
+<Window x:Class="SistemaControlAsistencia.App.Views.AdminMainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sistema de Control de Asistencia" Height="680" Width="1100"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource ColorGrisClaro}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Menú lateral -->
+        <Border Grid.Column="0" Background="{StaticResource ColorAzulMarino}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="18,20,18,20">
+                    <TextBlock Text="Sistema de Asistencia" Foreground="White" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <Separator Margin="0,16,0,8" Opacity="0.15"/>
+                    <TextBlock x:Name="TxtNombreUsuario" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="TxtRolUsuario" Foreground="#B9C6E0" FontSize="12"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,20">
+                    <Button Content="Cerrar sesión" Style="{StaticResource BotonMenu}" Click="BtnCerrarSesion_Click"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <Button Content="Dashboard" Style="{StaticResource BotonMenu}" Click="BtnDashboard_Click"/>
+                    <Button Content="Asistencia" Style="{StaticResource BotonMenu}" Click="BtnAsistencia_Click"/>
+                    <TextBlock Text="REPORTES" Foreground="#7C8AA8" FontSize="11" Margin="18,16,0,4"/>
+                    <Button Content="   Atrasos" Style="{StaticResource BotonMenu}" Click="BtnReporteAtrasos_Click"/>
+                    <Button Content="   Salidas anticipadas" Style="{StaticResource BotonMenu}" Click="BtnReporteSalidas_Click"/>
+                    <Button Content="   Inasistencias" Style="{StaticResource BotonMenu}" Click="BtnReporteInasistencias_Click"/>
+                    <Button Content="Usuarios" Style="{StaticResource BotonMenu}" Click="BtnUsuarios_Click"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Contenido -->
+        <ContentControl x:Name="ContenidoPrincipal" Grid.Column="1" Margin="24"/>
+    </Grid>
+</Window>

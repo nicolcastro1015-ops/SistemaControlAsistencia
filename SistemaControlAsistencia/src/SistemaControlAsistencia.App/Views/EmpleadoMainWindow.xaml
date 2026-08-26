@@ -1,0 +1,21 @@
+<Window x:Class="SistemaControlAsistencia.App.Views.EmpleadoMainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sistema de Control de Asistencia" Height="560" Width="720"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource ColorGrisClaro}">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{StaticResource ColorAzulMarino}" Padding="24,16">
+            <Grid>
+                <StackPanel>
+                    <TextBlock x:Name="TxtNombreUsuario" Foreground="White" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock x:Name="TxtRolUsuario" Foreground="#B9C6E0" FontSize="12"/>
+                </StackPanel>
+                <Button Content="Cerrar sesión" Style="{StaticResource BotonSecundario}" Foreground="White"
+                        BorderBrush="White" HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="BtnCerrarSesion_Click"/>
+            </Grid>
+        </Border>
+
+        <ContentControl x:Name="ContenidoPrincipal" Margin="24"/>
+    </DockPanel>
+</Window>

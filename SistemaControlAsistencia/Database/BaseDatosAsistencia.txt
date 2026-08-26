@@ -1,0 +1,248 @@
+/* =====================================================================
+   BASE DE DATOS: ControlAsistencia
+   Proyecto: Sistema de Control de Asistencia - Integración de Competencias II
+   Motor: Microsoft SQL Server (T-SQL) - compatible con SSMS 22
+   Avance #2 - Base de datos relacional
+
+   Este script es autocontenible: puede copiarse completo en una nueva
+   consulta de SQL Server Management Studio y ejecutarse de una sola vez
+   (tecla F5) sobre una instancia vacía.
+   ===================================================================== */
+
+-- =====================================================================
+-- 1. CREACIÓN DE LA BASE DE DATOS
+-- =====================================================================
+IF DB_ID('ControlAsistencia') IS NOT NULL
+BEGIN
+    ALTER DATABASE ControlAsistencia SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE ControlAsistencia;
+END
+GO
+
+CREATE DATABASE ControlAsistencia;
+GO
+
+USE ControlAsistencia;
+GO
+
+-- =====================================================================
+-- 2. TABLA USUARIO
+--    Relación: USUARIO 1 : N ASISTENCIA
+-- =====================================================================
+CREATE TABLE dbo.Usuario
+(
+    IdUsuario        INT IDENTITY(1,1) NOT NULL,
+    Nombre           NVARCHAR(100)     NOT NULL,
+    Apellidos        NVARCHAR(150)     NOT NULL,
+    Correo           NVARCHAR(150)     NOT NULL,
+    ContrasenaHash   NVARCHAR(300)     NOT NULL,
+    Rol              NVARCHAR(20)      NOT NULL,
+    Estado           BIT               NOT NULL CONSTRAINT DF_Usuario_Estado DEFAULT (1),
+
+    CONSTRAINT PK_Usuario PRIMARY KEY (IdUsuario),
+    CONSTRAINT UQ_Usuario_Correo UNIQUE (Correo),
+    CONSTRAINT CK_Usuario_Rol CHECK (Rol IN ('Administrador', 'Empleado'))
+);
+GO
+
+-- =====================================================================
+-- 3. TABLA ASISTENCIA
+--    Cada registro pertenece a un único usuario (FOREIGN KEY).
+--    No se permiten asistencias de usuarios inexistentes.
+-- =====================================================================
+CREATE TABLE dbo.Asistencia
+(
+    IdAsistencia   INT IDENTITY(1,1) NOT NULL,
+    IdUsuario      INT               NOT NULL,
+    TipoRegistro   NVARCHAR(10)      NOT NULL,
+    FechaHora      DATETIME2(0)      NOT NULL,
+
+    CONSTRAINT PK_Asistencia PRIMARY KEY (IdAsistencia),
+    CONSTRAINT FK_Asistencia_Usuario FOREIGN KEY (IdUsuario)
+        REFERENCES dbo.Usuario (IdUsuario),
+    CONSTRAINT CK_Asistencia_TipoRegistro CHECK (TipoRegistro IN ('Entrada', 'Salida'))
+);
+GO
+
+-- Índice de apoyo: los reportes y validaciones siempre filtran por usuario + fecha.
+CREATE INDEX IX_Asistencia_IdUsuario_FechaHora ON dbo.Asistencia (IdUsuario, FechaHora);
+GO
+
+-- =====================================================================
+-- 4. CUENTA ADMINISTRADORA INICIAL
+--
+--    Correo:      nicol.castro@empresa.cl
+--    Contraseña:  Admin123!   (SOLO para uso académico/demostración)
+--
+--    El valor de ContrasenaHash fue generado con el mismo algoritmo que usa
+--    la aplicación C# (PBKDF2-HMACSHA256, 100.000 iteraciones, ver
+--    Helpers/PasswordHasher.cs), por lo que esta cuenta puede iniciar sesión
+--    realmente desde la aplicación sin ningún paso adicional.
+-- =====================================================================
+INSERT INTO dbo.Usuario (Nombre, Apellidos, Correo, ContrasenaHash, Rol, Estado)
+VALUES
+('Nicol', 'Castro Zambrano', 'nicol.castro@empresa.cl',
+ '100000.8ylBe+dLLIJnlVeXpqwu4A==.IXvVcz4PER6mL84MesyTBiRW4gc3rDHzui5VsXJSf+8=',
+ 'Administrador', 1);
+GO
+
+-- =====================================================================
+-- 5. USUARIOS FICTICIOS DE PRUEBA
+--    Contraseña para TODOS los empleados de demostración: Empleado123!
+--    (hash generado con el mismo algoritmo PBKDF2 que usa la aplicación C#)
+-- =====================================================================
+INSERT INTO dbo.Usuario (Nombre, Apellidos, Correo, ContrasenaHash, Rol, Estado)
+VALUES
+('Ana',    'Torres',   'ana.torres@empresa.cl',
+ '100000.zgPy+WsJV/czdqqgvOJkyw==.0DPA8w2r+1ltpoDCxcXh/QD9sdZnal+07D05DS0ffSI=',
+ 'Empleado', 1),
+
+('Pedro',  'Soto',     'pedro.soto@empresa.cl',
+ '100000.OTzElOYwfcKQeKJP5I+qWA==.rnRa30k9hJzY1xpVIpciCiSteyCSJPZInQK3V6VcAzc=',
+ 'Empleado', 1),
+
+('Carlos', 'Fuentes',  'carlos.fuentes@empresa.cl',
+ '100000.fkjKiSSVBgBsZX4+SzMNBg==.CHArRDPidOPEbt5y41uZDGTZWxIdvv6YRAjVDbm8ckw=',
+ 'Empleado', 1),
+
+('Maria',  'Lopez',    'maria.lopez@empresa.cl',
+ '100000.5CjX+P838KFr98GcPY0E6Q==.UoiQOpCaN5rEyDHlQN6/hBv55ATWAVzddLWhADh7A5s=',
+ 'Empleado', 1),
+
+('Jorge',  'Diaz',     'jorge.diaz@empresa.cl',
+ '100000.a55JKgf9yL34fXWDOU+3oA==.28dvOFJOmUDSRhCTV+hkGS6Zny+jHB1QcTPjm3wMp/k=',
+ 'Empleado', 0),   -- Usuario INACTIVO: sirve para probar el mensaje de login "usuario inactivo"
+
+('Laura',  'Reyes',    'laura.reyes@empresa.cl',
+ '100000.JmssM4Cj/GOXaggjV5QN8g==.RWJKHUC7uz1/2jwo9SpVc9Ye5AKwMqsIvVTr4Rr1h4Q=',
+ 'Empleado', 1);
+GO
+
+-- =====================================================================
+-- 6. REGISTROS DE ASISTENCIA FICTICIOS
+--    Fecha de referencia usada para los reportes de demostración: 2026-08-24
+--
+--    Cobertura de escenarios (sección 29 del enunciado):
+--      - Entrada antes   de 09:30 -> Ana (09:15), Laura (09:00)
+--      - Entrada EXACTA  a  09:30 -> Pedro (puntual, límite exacto)
+--      - Entrada después de 09:30 -> Carlos (09:45, atraso)
+--      - Salida antes   de 17:30 -> Laura (17:15, anticipada)
+--      - Salida EXACTA  a  17:30 -> Pedro (normal, límite exacto)
+--      - Salida después de 17:30 -> Ana (17:45, normal)
+--      - Usuario sin registros ese día -> Maria (inasistencia)
+--      - Usuario inactivo -> Jorge (no marca por estar inactivo)
+--      - Administrador -> Nicol
+-- =====================================================================
+DECLARE @Fecha DATE = '2026-08-24';
+
+DECLARE @IdAna    INT = (SELECT IdUsuario FROM dbo.Usuario WHERE Correo = 'ana.torres@empresa.cl');
+DECLARE @IdPedro  INT = (SELECT IdUsuario FROM dbo.Usuario WHERE Correo = 'pedro.soto@empresa.cl');
+DECLARE @IdCarlos INT = (SELECT IdUsuario FROM dbo.Usuario WHERE Correo = 'carlos.fuentes@empresa.cl');
+DECLARE @IdLaura  INT = (SELECT IdUsuario FROM dbo.Usuario WHERE Correo = 'laura.reyes@empresa.cl');
+
+INSERT INTO dbo.Asistencia (IdUsuario, TipoRegistro, FechaHora) VALUES
+(@IdAna,    'Entrada', DATETIMEFROMPARTS(YEAR(@Fecha), MONTH(@Fecha), DAY(@Fecha), 9,  15, 0, 0)),
+(@IdAna,    'Salida',  DATETIMEFROMPARTS(YEAR(@Fecha), MONTH(@Fecha), DAY(@Fecha), 17, 45, 0, 0)),
+
+(@IdPedro,  'Entrada', DATETIMEFROMPARTS(YEAR(@Fecha), MONTH(@Fecha), DAY(@Fecha), 9,  30, 0, 0)),
+(@IdPedro,  'Salida',  DATETIMEFROMPARTS(YEAR(@Fecha), MONTH(@Fecha), DAY(@Fecha), 17, 30, 0, 0)),
+
+(@IdCarlos, 'Entrada', DATETIMEFROMPARTS(YEAR(@Fecha), MONTH(@Fecha), DAY(@Fecha), 9,  45, 0, 0)),
+
+(@IdLaura,  'Entrada', DATETIMEFROMPARTS(YEAR(@Fecha), MONTH(@Fecha), DAY(@Fecha), 9,   0, 0, 0)),
+(@IdLaura,  'Salida',  DATETIMEFROMPARTS(YEAR(@Fecha), MONTH(@Fecha), DAY(@Fecha), 17, 15, 0, 0));
+-- Nota: Maria Lopez (activa) queda deliberadamente sin registros el 2026-08-24
+-- para poder demostrar el reporte RE-03 (Inasistencias).
+GO
+
+-- =====================================================================
+-- 7. CONSULTAS SQL DE COMPROBACIÓN
+--    Sirven para demostrar al docente que el modelo relacional permite
+--    resolver cada requerimiento. Usan las mismas tablas y nombres que
+--    utiliza posteriormente el código C# (Data/UsuarioRepository.cs y
+--    Data/AsistenciaRepository.cs).
+-- =====================================================================
+
+-- 7.1 Todos los usuarios
+SELECT IdUsuario, Nombre, Apellidos, Correo, Rol, Estado FROM dbo.Usuario ORDER BY Apellidos;
+
+-- 7.2 Usuarios activos
+SELECT IdUsuario, Nombre, Apellidos, Correo, Rol FROM dbo.Usuario WHERE Estado = 1;
+
+-- 7.3 Buscar usuario por correo
+SELECT * FROM dbo.Usuario WHERE Correo = 'ana.torres@empresa.cl';
+
+-- 7.4 Todos los registros de asistencia
+SELECT a.IdAsistencia, u.Nombre, u.Apellidos, a.TipoRegistro, a.FechaHora
+FROM dbo.Asistencia a
+INNER JOIN dbo.Usuario u ON u.IdUsuario = a.IdUsuario
+ORDER BY a.FechaHora;
+
+-- 7.5 Asistencias de una fecha determinada
+SELECT u.Nombre, u.Apellidos, a.TipoRegistro, a.FechaHora
+FROM dbo.Asistencia a
+INNER JOIN dbo.Usuario u ON u.IdUsuario = a.IdUsuario
+WHERE CAST(a.FechaHora AS DATE) = '2026-08-24'
+ORDER BY a.FechaHora;
+
+-- 7.6 Asistencias de un trabajador específico
+SELECT a.TipoRegistro, a.FechaHora
+FROM dbo.Asistencia a
+INNER JOIN dbo.Usuario u ON u.IdUsuario = a.IdUsuario
+WHERE u.Correo = 'ana.torres@empresa.cl'
+ORDER BY a.FechaHora DESC;
+
+-- 7.7 RE-01: Entradas posteriores a las 09:30 (atrasos). 09:30 exacto NO cuenta.
+SELECT u.IdUsuario, u.Nombre, u.Apellidos, CAST(a.FechaHora AS DATE) AS Fecha, CAST(a.FechaHora AS TIME) AS HoraEntrada
+FROM dbo.Asistencia a
+INNER JOIN dbo.Usuario u ON u.IdUsuario = a.IdUsuario
+WHERE a.TipoRegistro = 'Entrada' AND CAST(a.FechaHora AS TIME) > '09:30:00'
+ORDER BY u.Apellidos;
+
+-- 7.8 RE-02: Salidas anteriores a las 17:30 (salidas anticipadas). 17:30 exacto NO cuenta.
+SELECT u.IdUsuario, u.Nombre, u.Apellidos, CAST(a.FechaHora AS DATE) AS Fecha, CAST(a.FechaHora AS TIME) AS HoraSalida
+FROM dbo.Asistencia a
+INNER JOIN dbo.Usuario u ON u.IdUsuario = a.IdUsuario
+WHERE a.TipoRegistro = 'Salida' AND CAST(a.FechaHora AS TIME) < '17:30:00'
+ORDER BY u.Apellidos;
+
+-- 7.9 RE-03: Inasistencias de una fecha determinada
+--     (usuarios activos que NO tienen ningún registro ese día)
+SELECT u.IdUsuario, u.Nombre, u.Apellidos, '2026-08-24' AS Fecha
+FROM dbo.Usuario u
+WHERE u.Estado = 1
+  AND NOT EXISTS (
+        SELECT 1 FROM dbo.Asistencia a
+        WHERE a.IdUsuario = u.IdUsuario
+          AND CAST(a.FechaHora AS DATE) = '2026-08-24'
+  )
+ORDER BY u.Apellidos;
+
+-- 7.10 Total de empleados activos
+SELECT COUNT(*) AS TotalEmpleadosActivos FROM dbo.Usuario WHERE Estado = 1;
+
+-- 7.11 Presentes del día (usuarios distintos con al menos una Entrada en la fecha)
+SELECT COUNT(DISTINCT a.IdUsuario) AS PresentesHoy
+FROM dbo.Asistencia a
+WHERE a.TipoRegistro = 'Entrada' AND CAST(a.FechaHora AS DATE) = '2026-08-24';
+
+-- 7.12 Atrasos del día (reutiliza la misma condición de 7.7 para la fecha de hoy)
+SELECT COUNT(*) AS AtrasosHoy
+FROM dbo.Asistencia a
+WHERE a.TipoRegistro = 'Entrada'
+  AND CAST(a.FechaHora AS DATE) = '2026-08-24'
+  AND CAST(a.FechaHora AS TIME) > '09:30:00';
+
+-- 7.13 Salidas anticipadas del día
+SELECT COUNT(*) AS SalidasAnticipadasHoy
+FROM dbo.Asistencia a
+WHERE a.TipoRegistro = 'Salida'
+  AND CAST(a.FechaHora AS DATE) = '2026-08-24'
+  AND CAST(a.FechaHora AS TIME) < '17:30:00';
+
+-- 7.14 Actividad reciente (últimos 10 movimientos registrados)
+SELECT TOP (10) u.Nombre, u.Apellidos, a.TipoRegistro, a.FechaHora
+FROM dbo.Asistencia a
+INNER JOIN dbo.Usuario u ON u.IdUsuario = a.IdUsuario
+ORDER BY a.FechaHora DESC;
+GO
