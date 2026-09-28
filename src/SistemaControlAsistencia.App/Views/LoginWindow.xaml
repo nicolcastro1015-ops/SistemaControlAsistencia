@@ -1,0 +1,52 @@
+<Window x:Class="SistemaControlAsistencia.App.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sistema de Control de Asistencia - Iniciar sesión"
+        Height="480" Width="820" WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Panel izquierdo -->
+        <Border Grid.Column="0" Background="{StaticResource ColorAzulMarino}">
+            <StackPanel VerticalAlignment="Center" Margin="40">
+                <Ellipse Width="64" Height="64" Fill="{StaticResource ColorAzulCorporativo}" Margin="0,0,0,24"/>
+                <TextBlock Text="SISTEMA DE CONTROL" Foreground="White" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
+                <TextBlock Text="DE ASISTENCIA" Foreground="White" FontSize="24" FontWeight="Bold" Margin="0,0,0,16"/>
+                <TextBlock Text="Empresa Química" Foreground="#B9C6E0" FontSize="16"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Panel derecho -->
+        <Border Grid.Column="1" Background="White">
+            <StackPanel VerticalAlignment="Center" Margin="50">
+                <TextBlock Text="Iniciar sesión" FontSize="26" FontWeight="Bold" Foreground="{StaticResource ColorTextoPrincipal}"/>
+                <TextBlock Text="Ingrese sus credenciales para acceder al sistema"
+                           Foreground="{StaticResource ColorTextoSecundario}" Margin="0,4,0,24" TextWrapping="Wrap"/>
+
+                <TextBlock Text="Correo electrónico" Margin="0,0,0,4" FontSize="12" Foreground="{StaticResource ColorTextoSecundario}"/>
+                <TextBox x:Name="TxtCorreo" Style="{StaticResource CampoTexto}" Margin="0,0,0,16"/>
+
+                <TextBlock Text="Contraseña" Margin="0,0,0,4" FontSize="12" Foreground="{StaticResource ColorTextoSecundario}"/>
+                <Grid Margin="0,0,0,4">
+                    <PasswordBox x:Name="PwdContrasena" Style="{StaticResource CampoContrasena}" PasswordChanged="PwdContrasena_PasswordChanged"/>
+                    <TextBox x:Name="TxtContrasenaVisible" Style="{StaticResource CampoTexto}" Visibility="Collapsed" TextChanged="TxtContrasenaVisible_TextChanged"/>
+                    <CheckBox x:Name="ChkMostrarContrasena" Content="Mostrar" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Margin="0,0,8,0" Checked="ChkMostrarContrasena_Changed" Unchecked="ChkMostrarContrasena_Changed"/>
+                </Grid>
+
+                <TextBlock x:Name="TxtMensajeError" Foreground="{StaticResource ColorError}" TextWrapping="Wrap"
+                           Margin="0,12,0,0" Visibility="Collapsed"/>
+
+                <Button x:Name="BtnIniciarSesion" Content="Iniciar sesión" Style="{StaticResource BotonPrimario}"
+                        Margin="0,20,0,0" Click="BtnIniciarSesion_Click"/>
+
+                <TextBlock Text="Proyecto académico - Integración de Competencias II" FontSize="11"
+                           Foreground="{StaticResource ColorTextoSecundario}" Margin="0,24,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

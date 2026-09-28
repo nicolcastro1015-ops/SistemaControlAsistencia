@@ -1,0 +1,25 @@
+<UserControl x:Class="SistemaControlAsistencia.App.Views.ReporteInasistenciasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock Text="Reporte de inasistencias" FontSize="24" FontWeight="Bold" Foreground="{StaticResource ColorTextoPrincipal}"/>
+            <TextBlock Text="Trabajadores activos sin entrada ni salida registrada (RE-03)" Foreground="{StaticResource ColorTextoSecundario}" Margin="0,2,0,12"/>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Fecha:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <DatePicker x:Name="DpFecha" Width="150" SelectedDateChanged="DpFecha_SelectedDateChanged"/>
+            </StackPanel>
+        </StackPanel>
+
+        <Border Background="White" CornerRadius="8" BorderBrush="{StaticResource ColorBorde}" BorderThickness="1">
+            <DataGrid x:Name="GridResultados">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding IdUsuario}" Width="60"/>
+                    <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="1*"/>
+                    <DataGridTextColumn Header="Apellidos" Binding="{Binding Apellidos}" Width="1*"/>
+                    <DataGridTextColumn Header="Fecha" Binding="{Binding FechaTexto}" Width="1*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </DockPanel>
+</UserControl>

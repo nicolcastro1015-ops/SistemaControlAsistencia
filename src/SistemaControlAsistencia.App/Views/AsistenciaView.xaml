@@ -1,0 +1,26 @@
+<UserControl x:Class="SistemaControlAsistencia.App.Views.AsistenciaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel MaxWidth="520" HorizontalAlignment="Left">
+        <TextBlock x:Name="TxtSaludo" FontSize="24" FontWeight="Bold" Foreground="{StaticResource ColorTextoPrincipal}"/>
+        <TextBlock x:Name="TxtFechaHora" Foreground="{StaticResource ColorTextoSecundario}" Margin="0,4,0,20"/>
+
+        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="{StaticResource ColorBorde}" BorderThickness="1" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Último registro" FontSize="12" Foreground="{StaticResource ColorTextoSecundario}"/>
+                <TextBlock x:Name="TxtUltimoRegistro" FontSize="16" FontWeight="SemiBold" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Orientation="Horizontal">
+            <Button x:Name="BtnMarcarEntrada" Content="Marcar Entrada" Style="{StaticResource BotonPrimario}"
+                    Width="200" Margin="0,0,12,0" Click="BtnMarcarEntrada_Click"/>
+            <Button x:Name="BtnMarcarSalida" Content="Marcar Salida" Style="{StaticResource BotonSecundario}"
+                    Width="200" Click="BtnMarcarSalida_Click"/>
+        </StackPanel>
+
+        <Border x:Name="PanelMensaje" Background="{StaticResource ColorAzulClaro}" CornerRadius="6" Padding="12" Margin="0,16,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="TxtMensaje" TextWrapping="Wrap"/>
+        </Border>
+    </StackPanel>
+</UserControl>

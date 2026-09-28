@@ -1,0 +1,38 @@
+<UserControl x:Class="SistemaControlAsistencia.App.Views.UsuariosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Usuarios" FontSize="24" FontWeight="Bold" Foreground="{StaticResource ColorTextoPrincipal}"/>
+                <TextBlock Text="Gestiona los usuarios del sistema" Foreground="{StaticResource ColorTextoSecundario}"/>
+            </StackPanel>
+            <Button Content="+ Nuevo usuario" Style="{StaticResource BotonPrimario}" Width="160"
+                    HorizontalAlignment="Right" VerticalAlignment="Center" Click="BtnNuevoUsuario_Click"/>
+        </Grid>
+
+        <Border Background="White" CornerRadius="8" BorderBrush="{StaticResource ColorBorde}" BorderThickness="1">
+            <DataGrid x:Name="GridUsuarios">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding IdUsuario}" Width="50"/>
+                    <DataGridTextColumn Header="Nombre" Binding="{Binding NombreCompleto}" Width="2*"/>
+                    <DataGridTextColumn Header="Correo" Binding="{Binding Correo}" Width="2*"/>
+                    <DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="1*"/>
+                    <DataGridTextColumn Header="Estado" Binding="{Binding EstadoTexto}" Width="1*"/>
+                    <DataGridTemplateColumn Header="Acciones" Width="180">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Editar" Margin="0,0,6,0" Padding="8,4"
+                                            Click="BtnEditar_Click" Tag="{Binding IdUsuario}"/>
+                                    <Button Content="Eliminar" Padding="8,4"
+                                            Click="BtnEliminar_Click" Tag="{Binding IdUsuario}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </DockPanel>
+</UserControl>

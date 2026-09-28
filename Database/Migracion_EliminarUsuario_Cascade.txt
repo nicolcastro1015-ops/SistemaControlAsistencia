@@ -1,0 +1,35 @@
+/* =====================================================================
+   MIGRACIÓN: agregar ON DELETE CASCADE a la relación Usuario-Asistencia
+   Proyecto: Sistema de Control de Asistencia
+
+   USAR ESTE SCRIPT SI YA EJECUTARON BaseDatosAsistencia.txt ANTES y no
+   quieren perder los usuarios que ya crearon manualmente (Paula, Dave,
+   Nicol Contreras, etc.). Este script NO borra la base de datos, solo
+   modifica la restricción de llave foránea.
+
+   Si en cambio prefieren partir de cero, simplemente vuelvan a ejecutar
+   el BaseDatosAsistencia.txt actualizado (ese sí borra y recrea todo).
+   ===================================================================== */
+
+USE ControlAsistencia;
+GO
+
+-- 1. Eliminar la restricción de llave foránea actual (sin cascada)
+ALTER TABLE dbo.Asistencia DROP CONSTRAINT FK_Asistencia_Usuario;
+GO
+
+-- 2. Volver a crearla, esta vez con ON DELETE CASCADE
+ALTER TABLE dbo.Asistencia
+ADD CONSTRAINT FK_Asistencia_Usuario FOREIGN KEY (IdUsuario)
+    REFERENCES dbo.Usuario (IdUsuario)
+    ON DELETE CASCADE;
+GO
+
+-- 3. Verificación: confirmar que la restricción quedó con cascada
+SELECT
+    fk.name AS NombreRestriccion,
+    fk.delete_referential_action_desc AS AccionAlEliminar
+FROM sys.foreign_keys fk
+WHERE fk.name = 'FK_Asistencia_Usuario';
+-- La columna AccionAlEliminar debe mostrar: CASCADE
+GO
