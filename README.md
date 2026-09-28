@@ -1,13 +1,10 @@
 # Sistema de Control de Asistencia
 ### Proyecto académico — Integración de Competencias II — Ingeniería en Informática
 
-> **Aviso importante sobre este entregable:** todo el código de este proyecto fue escrito
-> completo y listo para compilar en Visual Studio sobre Windows. Sin embargo, fue generado en un
-> entorno Linux sin Visual Studio, sin SDK de WPF/.NET para escritorio y sin acceso a NuGet, por lo
-> que **no fue posible compilarlo ni ejecutarlo aquí**. Se revisó cuidadosamente la sintaxis y la
-> coherencia entre archivos, pero usted deberá compilarlo la primera vez en su propio equipo
-> siguiendo la sección "Instrucciones de ejecución" y avisarme si aparece algún error para
-> corregirlo de inmediato.
+> **Estado del proyecto:** versión final compilada, ejecutada y probada por el equipo en Windows
+> con Visual Studio y SQL Server Management Studio. La ejecución final de las pruebas automatizadas
+> (27-09-2026) dio **41 pruebas ejecutadas, 41 superadas, 0 con errores y 0 omitidas**. El detalle
+> del desarrollo, las pruebas y las evidencias está en el Informe Final y en el Plan de Pruebas.
 
 ---
 
@@ -18,10 +15,10 @@
 | Lenguaje | C# | Exigido por el enunciado |
 | Plataforma | .NET 8 | Versión LTS actual, estable, con soporte oficial de Microsoft.Data.SqlClient |
 | Interfaz de escritorio | **WPF** (no .NET MAUI) | MAUI está pensado para apps multiplataforma (incluyendo móvil); para un MVP de escritorio **solo Windows**, WPF es más simple, tiene mejor soporte de `DataGrid`/formularios de negocio, y es la tecnología de escritorio más estable y documentada para este tipo de proyecto académico |
-| Motor de base de datos | Microsoft SQL Server | Exigido explícitamente en el documento 2 |
-| Administración de BD | SQL Server Management Studio 22 | Exigido explícitamente |
+| Motor de base de datos | Microsoft SQL Server | Motor relacional adecuado a la relación 1:N entre Usuario y Asistencia |
+| Administración de BD | SQL Server Management Studio 22 | Herramienta usada para crear y verificar la base de datos |
 | Acceso a datos | ADO.NET + `Microsoft.Data.SqlClient`, consultas parametrizadas | Librería oficial y actual de Microsoft para SQL Server desde .NET; evita inyección SQL |
-| Hashing de contraseñas | PBKDF2-HMACSHA256 vía `Rfc2898DeriveBytes` (nativo de .NET) | Seguro y **no requiere ningún paquete NuGet adicional** (importante porque en este entorno de generación no hubo acceso a NuGet para verificar paquetes de terceros como BCrypt.Net) |
+| Hashing de contraseñas | PBKDF2-HMACSHA256 vía `Rfc2898DeriveBytes` (nativo de .NET) | Seguro y **no requiere ningún paquete NuGet adicional** |
 | Pruebas | xUnit | Estándar moderno, ligero, bien soportado por Visual Studio |
 
 Esta elección se mantuvo sin cambios durante todo el proyecto.
@@ -93,13 +90,14 @@ SistemaControlAsistencia/
 │   └── IntegracionBaseDatosTests.cs            ← PRUEBAS DE INTEGRACIÓN (requieren SQL Server real)
 │
 └── Database/
-    └── BaseDatosAsistencia.txt                 ← AVANCE #2 (script SQL Server completo)
+    ├── BaseDatosAsistencia.txt                 ← AVANCE #2 (script SQL Server completo)
+    └── Migracion_EliminarUsuario_Cascade.txt   (solo para bases creadas antes del cambio de GU-03)
 ```
 
 **Por qué no hay sobre-arquitectura:** no se usan contenedores de inyección de dependencias,
 ni CQRS, ni MediatR, ni ORM. `FabricaServicios` construye los servicios a mano; los repositorios
 usan ADO.NET directo. Esto es intencional: es un MVP académico de 25 trabajadores, no un sistema
-empresarial de gran escala, y así resulta mucho más fácil de explicar frente al docente.
+empresarial de gran escala, y así el código se mantiene simple y fácil de mantener.
 
 ### Por qué las clases de prueba usan repositorios "falsos" (Fakes) en vez de mocks con librerías
 Se definieron `IUsuarioRepository` e `IAsistenciaRepository` como interfaces. Los servicios
@@ -302,25 +300,27 @@ al guardar/consultar.
 
 ---
 
-## 10. Plan de pruebas
+## 10. Pruebas automatizadas: resultado final
 
-| ID | Requerimiento | Nombre de prueba | Objetivo | Precondición | Datos de entrada | Pasos | Resultado esperado | Resultado obtenido | Estado |
-|---|---|---|---|---|---|---|---|---|---|
-| P01 | CA-01 | Login correcto | Verificar que un usuario válido y activo puede autenticarse | BD con `ana.torres@empresa.cl` activa | correo=ana.torres@empresa.cl, clave=Empleado123! | Ejecutar `AutenticacionServiceTests.Login_ConCredencialesCorrectas_RetornaExito` | `Exito = true` | *(pendiente de ejecución por el estudiante en su equipo)* | Pendiente |
-| P02 | CA-01 | Contraseña incorrecta | Verificar mensaje genérico de error | Igual a P01 | clave incorrecta | `Login_ConContrasenaIncorrecta_RetornaMensajeGenerico` | Mensaje "Correo o contraseña incorrectos." | *(pendiente)* | Pendiente |
-| P03 | CA-01 | Usuario inactivo | Verificar bloqueo de usuarios inactivos | `jorge.diaz@empresa.cl` inactivo | correo=jorge.diaz@empresa.cl | `Login_ConUsuarioInactivo_RetornaMensajeDeInactivo` | Mensaje "El usuario se encuentra inactivo..." | *(pendiente)* | Pendiente |
-| P04 | CA-01 | Doble entrada | Evitar dos entradas el mismo día | Ninguna asistencia hoy | 2 llamadas a `RegistrarEntrada` | `RegistrarEntrada_SiYaExisteEntradaHoy_RechazaLaDobleEntrada` | Segundo intento falla | *(pendiente)* | Pendiente |
-| P05 | CA-01 | Salida sin entrada | Evitar registrar salida sin entrada previa | Sin entrada hoy | `RegistrarSalida` directo | `RegistrarSalida_SinEntradaPrevia_SeRechaza` | Falla con mensaje específico | *(pendiente)* | Pendiente |
-| P06 | RE-01 | Límite 09:30 exacto | Confirmar que 09:30 NO es atraso | — | 09:29, 09:30, 09:31 | `ReglasHorariasTests.EsAtraso_*` | Solo 09:31 es atraso | *(pendiente)* | Pendiente |
-| P07 | RE-02 | Límite 17:30 exacto | Confirmar que 17:30 NO es anticipada | — | 17:29, 17:30, 17:31 | `ReglasHorariasTests.EsSalidaAnticipada_*` | Solo 17:29 es anticipada | *(pendiente)* | Pendiente |
-| P08 | RE-03 | Detección de inasistencia | Detectar activos sin ningún registro | Ana y Pedro con registros, Carlos sin registros | Fecha común | `ReporteServiceTests.ObtenerInasistencias_DetectaAUsuariosActivosSinNingunRegistro` | Solo Carlos aparece | *(pendiente)* | Pendiente |
-| P09 | GU-01 | Correo duplicado | Rechazar creación con correo repetido | Usuario ya creado | Mismo correo | `UsuarioServiceTests.CrearUsuario_ConCorreoDuplicado_SeRechaza` | Falla con mensaje específico | *(pendiente)* | Pendiente |
-| P10 | GU-03 | Eliminación física con cascada | Confirmar que el usuario y su historial desaparecen | Usuario creado | `EliminarUsuario(id)` | `EliminarUsuario_EliminaDeFormaFisicaYPermanente_...` | El usuario ya no existe (`ObtenerPorId` retorna `null`) | *(pendiente)* | Pendiente |
-| P11 | Integración | Login contra BD real | Confirmar que el hash sembrado por SQL funciona desde C# | Script ejecutado en SQL Server | admin real | `IntegracionBaseDatosTests.Login_ContraBaseDeDatosReal_...` | `Exito = true` | *(pendiente)* | Pendiente |
+El proyecto `SistemaControlAsistencia.Tests` contiene **41 pruebas xUnit**: 38 unitarias (con
+repositorios Fake en memoria) y 3 de integración (contra SQL Server real). El detalle de cada caso
+está en el documento **Plan de Pruebas Unitarias** entregado junto al proyecto.
 
-> Las columnas "Resultado obtenido" y "Estado" se completan por el estudiante **después** de
-> ejecutar el Explorador de pruebas en su propio equipo, tal como exige el enunciado (no se
-> inventan resultados de ejecución que aún no se han corrido).
+| Clase de pruebas | Tipo | Pruebas | Resultado |
+|---|---|---|---|
+| `AsistenciaServiceTests` | Unitaria | 7 | Superadas |
+| `AutenticacionServiceTests` | Unitaria | 5 | Superadas |
+| `UsuarioServiceTests` | Unitaria | 8 | Superadas |
+| `ReglasHorariasTests` | Unitaria (Theory, 8 casos) | 8 | Superadas |
+| `ReporteServiceTests` | Unitaria | 4 | Superadas |
+| `RolesYSesionTests` | Unitaria | 3 | Superadas |
+| `PasswordHasherTests` | Unitaria | 3 | Superadas |
+| `IntegracionBaseDatosTests` | Integración | 3 | Superadas |
+| **Total** | | **41** | **41 superadas, 0 con errores, 0 omitidas** |
+
+Durante la ejecución se detectaron y corrigieron tres problemas (plataforma de destino del
+proyecto de pruebas, un dato de prueba en la eliminación física y una prueba de integración que no
+se podía repetir); están documentados en el Informe Final.
 
 ---
 
@@ -344,7 +344,15 @@ carpetas relativa (`Models/Usuario.cs`, etc.).
 
 ---
 
-## 13. Avance #4 (Semana 5) — archivos correspondientes
+## 13. Avance #3 (Semana 4) — archivos correspondientes
+
+- `src/SistemaControlAsistencia.App/Services/UsuarioService.cs` y `AsistenciaService.cs`
+- `src/SistemaControlAsistencia.App/Views/UsuariosView.xaml(.cs)`, `UsuarioFormWindow.xaml(.cs)` y `AsistenciaView.xaml(.cs)`
+- `tests/SistemaControlAsistencia.Tests/UsuarioServiceTests.cs` y `AsistenciaServiceTests.cs`
+
+---
+
+## 14. Avance #4 (Semana 5) — archivos correspondientes
 
 - `src/SistemaControlAsistencia.App/Services/ReporteService.cs`
 - `src/SistemaControlAsistencia.App/Views/ReporteAtrasosView.xaml(.cs)`
@@ -355,10 +363,7 @@ carpetas relativa (`Models/Usuario.cs`, etc.).
 
 ---
 
-## 14. Preguntas de cierre
-
-> Estas respuestas están redactadas específicamente sobre lo que se construyó en este proyecto,
-> no de forma genérica.
+## 15. Preguntas de cierre
 
 **1. ¿Qué aprendiste de la actividad realizada?**
 Aprendí a estructurar una aplicación de escritorio en capas (modelos, acceso a datos, servicios,
@@ -375,7 +380,7 @@ etc. La técnica de centralizar reglas de negocio (como las horas límite) en un
 es reutilizable en cualquier sistema con reglas que puedan cambiar con el tiempo.
 
 **3. ¿Hubo algún término, definición o parte del proceso que necesites reforzar? ¿Cuál?**
-*(Esta respuesta debe completarla usted según su propia experiencia al compilar y probar el
-proyecto en su equipo — por ejemplo, si tuvo dificultades con la configuración de la cadena de
-conexión, con el Explorador de pruebas de Visual Studio, o con algún concepto de SQL como las
-restricciones `CHECK`.)*
+Reforzar las consultas con fechas y JOIN en T-SQL, los conceptos de claves foráneas (por ejemplo
+ON DELETE CASCADE, que usamos por primera vez) y el diseño de pruebas de integración repetibles,
+tema que aprendimos al corregir la falla de la prueba de asistencia. Las respuestas de cada avance
+están en la sección 11 del Informe Final.
